@@ -28,64 +28,19 @@ module Hello
         end
 
         def kick(*roles)
-          should_kick = roles.map { |r| current_user_or_guest.role_is? r }.inject(:|)
-          return kick_redirection if should_kick
+          hello_ai.to_homepage_if_should_kick(roles)
         end
 
         def dont_kick(*roles)
-          should_not_kick = roles.map { |r| current_user_or_guest.role_is? r }.inject(:|)
-          return kick_redirection unless should_not_kick
+          hello_ai.to_home_page_unless_should_not_kick(roles)
         end
 
         private
 
-        def kick_redirection
-          u = current_user_or_guest
-
-          return redirect_to_sign_in if u.guest?
-          return redirect_to_onboarding if u.onboarding?
-          redirect_to_root
+        def hello_ai
+          @hello_ai ||= Hello::Authentication::AuthorizationInteractor.new(current_user, self)
         end
 
-        def current_user_or_guest
-          current_user || ::User.new(role: 'guest')
-        end
-
-        def redirect_to_root
-          respond_to do |format|
-            format.html { redirect_to '/' }
-            format.json do
-              data   = { 'message' => 'Access Denied.' }
-              status = :forbidden # 403
-              render json: data, status: status
-            end
-          end
-        end
-
-        def redirect_to_sign_in
-          respond_to do |format|
-            format.html do
-              hello_keep_current_url_on_session!
-              redirect_to hello.sign_in_path
-            end
-            format.json do
-              data   = { 'message' => 'An active access token must be used to query information about the current user.' }
-              status = :unauthorized # 401
-              render json: data, status: status
-            end
-          end
-        end
-
-        def redirect_to_onboarding
-          respond_to do |format|
-            format.html { redirect_to '/onboarding' }
-            format.json do
-              data   = { 'message' => 'Access Denied, visit /onboarding and complete your registration.' }
-              status = :forbidden # 403
-              render json: data, status: status
-            end
-          end
-        end
       end
     end
   end

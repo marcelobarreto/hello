@@ -1,0 +1,1 @@
+require_relative 'authentication/authorization_interactor'
