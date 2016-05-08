@@ -22,13 +22,25 @@ module Hello
 
       # POST /hello/sign_up
       def create
-        if @sign_up.register(params.require(:sign_up))
-          flash[:notice] = @sign_up.success_message
-          on_success
-        else
+        if classic_sign_up_disabled
+          @sign_up.errors[:base] << "Email Registration is temporarily disabled"
           on_failure
+        else
+          if @sign_up.register(params.require(:sign_up))
+            flash[:notice] = @sign_up.success_message
+            on_success
+          else
+            on_failure
+          end
         end
       end
+
+      # GET /hello/sign_up/disabled
+      def disabled
+        render_classic_sign_up
+      end
+
+      protected
 
       def render_classic_sign_up
         render 'hello/registration/classic_sign_up/index'
